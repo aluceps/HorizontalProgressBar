@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HorizontalProgressBar">
+        <attr name="progress_border_width" format="dimension|reference" />
+        <attr name="progress_corner_radius" format="dimension|reference" />
+        <attr name="progress_color_base" format="color|reference" />
+        <attr name="progress_color_primary" format="color|reference" />
+        <attr name="progress_color_secondary" format="color|reference" />
+    </declare-styleable>
+</resources>
