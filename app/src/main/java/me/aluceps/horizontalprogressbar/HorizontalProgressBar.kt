@@ -96,8 +96,14 @@ class HorizontalProgressBar @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
+
+        // プログレスバーのベース
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
+
+        // 枠線を考慮した Rect で型抜きをする
         canvas.drawRoundRect(rectCutting, innerRadius, innerRadius, progressCutting)
+
+        // 型抜き領域に色付けする
         rectPrimary.also { it.set(innerLeft, innerTop, innerRight * progress, innerBottom) }.let {
             canvas.drawRect(it, progressPrimary)
         }
