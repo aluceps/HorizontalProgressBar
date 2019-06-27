@@ -1,10 +1,7 @@
 package me.aluceps.horizontalprogressbar
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import java.util.*
@@ -21,6 +18,9 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var colorPrimary = 0
     private var colorSecondary = 0
 
+    /**
+     * 枠を表現するために枠の太さを加減
+     */
     private val innerLeft by lazy { 0 + borderWidth }
     private val innerTop by lazy { 0 + borderWidth }
     private val innerRight by lazy { width - borderWidth }
@@ -37,6 +37,16 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
     }
 
+    private val progressCutting by lazy {
+        Paint().apply {
+            this.strokeWidth = strokeWidth
+            this.isAntiAlias = true
+            this.strokeCap = Paint.Cap.ROUND
+            this.strokeJoin = Paint.Join.ROUND
+            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        }
+    }
+
     private val progressPrimary by lazy {
         Paint().apply {
             this.strokeWidth = strokeWidth
@@ -44,11 +54,15 @@ class HorizontalProgressBar @JvmOverloads constructor(
             this.isAntiAlias = true
             this.strokeCap = Paint.Cap.ROUND
             this.strokeJoin = Paint.Join.ROUND
+            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
         }
     }
 
     private val rectBase by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
-    private val rectPrimary by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
+    private val rectCutting by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
+    private val rectPrimary = RectF()
+
+    private var progress = 0f
 
     init {
         setup(context, attrs, defStyleAttr)
@@ -83,6 +97,13 @@ class HorizontalProgressBar @JvmOverloads constructor(
         super.onDraw(canvas)
         if (canvas == null) return
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
-        canvas.drawRoundRect(rectPrimary, innerRadius, innerRadius, progressPrimary)
+        canvas.drawRoundRect(rectCutting, innerRadius, innerRadius, progressCutting)
+        rectPrimary.also { it.set(innerLeft, innerTop, innerRight * progress, innerBottom) }.let {
+            canvas.drawRect(it, progressPrimary)
+        }
+    }
+
+    fun setProgress(progress: Float) {
+        this.progress = progress
     }
 }
