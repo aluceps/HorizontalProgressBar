@@ -18,23 +18,18 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var colorBase = 0
     private var colorValue = 0
 
-    /**
-     * 枠を表現するために枠の太さを加減
-     */
     private val innerLeft by lazy { 0 + borderWidth }
     private val innerTop by lazy { 0 + borderWidth }
     private val innerRight by lazy { width - borderWidth }
     private val innerBottom by lazy { height - borderWidth }
     private val innerRadius by lazy { cornerRadius - borderWidth }
 
-    // 左右の枠と目盛りの本数分を考慮した幅
     private val innerWidthWithoutTick by lazy {
-        width - borderWidth * (2 + 9)
+        width - borderWidth * (2 + TICK_COUNT - 1)
     }
 
-    // 目盛りの間隔
     private val tickInterval by lazy {
-        innerWidthWithoutTick / 10 + borderWidth
+        innerWidthWithoutTick / TICK_COUNT
     }
 
     private val progressBase by lazy {
@@ -74,7 +69,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private val rectBase by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInner by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
     private val rectValue = RectF()
-    private val rectTick by lazy { RectF(0f, innerTop, borderWidth, innerBottom) }
+    private val rectTick = RectF()
 
     private var progress = 0f
 
@@ -110,24 +105,17 @@ class HorizontalProgressBar @JvmOverloads constructor(
         if (canvas == null) return
 
         canvas.saveLayer(rectBase, progressBase)
-
-        // プログレスバーのベース
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
-
-        // 枠の太さを考慮した Rect で型抜きをする
         canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
 
-        // プログレスが増えたときに型抜き領域に色付けする
-        // left は枠の太さを考慮しているので right の開始も枠の太さに合わせる
         rectValue.also {
             it.set(innerLeft, innerTop, borderWidth + progress, innerBottom)
         }.let {
             canvas.drawRect(it, progressValue)
         }
 
-        // 目盛り
-        for (i in 1..9) {
-            val position = tickInterval * i
+        for (i in 1 until TICK_COUNT) {
+            val position = (tickInterval + borderWidth) * i
             rectTick.also {
                 it.set(position, innerTop, borderWidth + position, innerBottom)
             }.let {
@@ -138,10 +126,13 @@ class HorizontalProgressBar @JvmOverloads constructor(
         canvas.restore()
     }
 
-    // 外枠と目盛り分の枠を考慮したプログレス純増分に応じて目盛りの枠を加算する
     fun setProgress(progress: Float) {
         val current = progress * innerWidthWithoutTick
-        val tickCount = (current / (innerWidthWithoutTick / 10)).roundToInt() - 1
+        val tickCount = (current / tickInterval).roundToInt() - 1
         this.progress = current + borderWidth * if (tickCount < 0) 0 else tickCount
+    }
+
+    companion object {
+        private const val TICK_COUNT = 10
     }
 }
