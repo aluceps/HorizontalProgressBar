@@ -10,31 +10,43 @@
         tools:context=".MainActivity"
         >
 
-        <me.aluceps.horizontalprogressbar.HorizontalProgressBar
-            android:id="@+id/progress_bar"
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_margin="32dp"
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#00efb8"
+            android:padding="32dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:progress_border_width="4dp"
-            app:progress_color_base="#aaa"
-            app:progress_color_primary="#0f0"
-            app:progress_corner_radius="16dp"
-            />
+            >
 
-        <android.support.v7.widget.AppCompatSeekBar
-            android:id="@+id/seekbar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="32dp"
-            android:max="100"
-            android:progress="0"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/progress_bar"
-            />
+            <me.aluceps.horizontalprogressbar.HorizontalProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                app:layout_constraintBottom_toTopOf="@id/seekbar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:progress_border_width="4dp"
+                app:progress_color_base="#fff"
+                app:progress_color_primary="#0f0"
+                app:progress_corner_radius="12dp"
+                />
+
+            <android.support.v7.widget.AppCompatSeekBar
+                android:id="@+id/seekbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:max="100"
+                android:progress="0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/progress_bar"
+                />
+        </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
 </layout>
