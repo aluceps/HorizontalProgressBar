@@ -29,5 +29,7 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
             }
         })
+        binding.blink.setOnClickListener {
+        }
     }
 }
