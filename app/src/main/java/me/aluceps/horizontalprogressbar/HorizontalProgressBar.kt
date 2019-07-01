@@ -3,6 +3,7 @@ package me.aluceps.horizontalprogressbar
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import java.util.*
 
@@ -26,41 +27,49 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private val innerBottom by lazy { height - borderWidth }
     private val innerRadius by lazy { cornerRadius - borderWidth }
 
+    // 左右の枠と目盛りの本数分を考慮した間隔
+    private val tickInterval by lazy {
+        (width - borderWidth * (2 + 9)) / 10 + borderWidth
+    }
+
     private val progressBase by lazy {
         Paint().apply {
-            this.strokeWidth = strokeWidth
-            this.color = colorBase
-            this.style = Paint.Style.FILL_AND_STROKE
-            this.isAntiAlias = true
-            this.strokeCap = Paint.Cap.ROUND
-            this.strokeJoin = Paint.Join.ROUND
+            color = colorBase
+            style = Paint.Style.FILL
+            isAntiAlias = true
         }
     }
 
     private val progressInner by lazy {
         Paint().apply {
-            this.strokeWidth = strokeWidth
-            this.color = Color.BLACK
-            this.style = Paint.Style.FILL_AND_STROKE
-            this.isAntiAlias = true
-            this.strokeCap = Paint.Cap.ROUND
-            this.strokeJoin = Paint.Join.ROUND
-            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            color = Color.BLACK
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
         }
     }
 
     private val progressValue by lazy {
         Paint().apply {
-            this.strokeWidth = strokeWidth
-            this.color = colorValue
-            this.isAntiAlias = true
-            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+            color = colorValue
+            isAntiAlias = true
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+        }
+    }
+
+    private val tickBase by lazy {
+        Paint().apply {
+            color = colorBase
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
         }
     }
 
     private val rectBase by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInner by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
     private val rectValue = RectF()
+    private val rectTick by lazy { RectF(0f, innerTop, borderWidth, innerBottom) }
 
     private var progress = 0f
 
@@ -100,15 +109,25 @@ class HorizontalProgressBar @JvmOverloads constructor(
         // プログレスバーのベース
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
 
-        // 枠線を考慮した Rect で型抜きをする
+        // 枠の太さを考慮した Rect で型抜きをする
         canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
 
-        // 型抜き領域に色付けする
+        // プログレスが増えたときに型抜き領域に色付けする
+        // left は枠の太さを考慮しているので right の開始も枠の太さに合わせる
         rectValue.also {
-            it.offset(borderWidth, innerTop)
-            it.set(innerLeft, innerTop, innerRight * progress, innerBottom)
+            it.set(innerLeft, innerTop, borderWidth + (innerRight - borderWidth) * progress, innerBottom)
         }.let {
+            Log.d("RectValu", "$it")
             canvas.drawRect(it, progressValue)
+        }
+
+        for (i in 1..9) {
+            val position = tickInterval * i
+            rectTick.also {
+                it.set(position, innerTop, position + borderWidth, innerBottom)
+            }.let {
+                canvas.drawRect(it, tickBase)
+            }
         }
 
         canvas.restore()

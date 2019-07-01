@@ -3,6 +3,7 @@ package me.aluceps.horizontalprogressbar
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.widget.SeekBar
 import me.aluceps.horizontalprogressbar.databinding.ActivityMainBinding
 
@@ -17,6 +18,7 @@ class MainActivity : AppCompatActivity() {
         binding.seekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 seekBar?.max?.toFloat()?.let {
+                    Log.d("Progress", "progress=${progress / it}")
                     binding.progressBar.setProgress((progress / it))
                 }
             }
