@@ -138,6 +138,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
         canvas.restore()
     }
 
+    // 外枠と目盛り分の枠を考慮したプログレス純増分に応じて目盛りの枠を加算する
     fun setProgress(progress: Float) {
         val current = progress * innerWidthWithoutTick
         val tickCount = (current / (innerWidthWithoutTick / 10)).roundToInt() - 1
