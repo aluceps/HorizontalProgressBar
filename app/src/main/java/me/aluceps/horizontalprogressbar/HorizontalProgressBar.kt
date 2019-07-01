@@ -3,9 +3,9 @@ package me.aluceps.horizontalprogressbar
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import java.util.*
+import kotlin.math.roundToInt
 
 class HorizontalProgressBar @JvmOverloads constructor(
     context: Context?,
@@ -27,9 +27,14 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private val innerBottom by lazy { height - borderWidth }
     private val innerRadius by lazy { cornerRadius - borderWidth }
 
-    // 左右の枠と目盛りの本数分を考慮した間隔
+    // 左右の枠と目盛りの本数分を考慮した幅
+    private val innerWidthWithoutTick by lazy {
+        width - borderWidth * (2 + 9)
+    }
+
+    // 目盛りの間隔
     private val tickInterval by lazy {
-        (width - borderWidth * (2 + 9)) / 10 + borderWidth
+        innerWidthWithoutTick / 10 + borderWidth
     }
 
     private val progressBase by lazy {
@@ -115,16 +120,16 @@ class HorizontalProgressBar @JvmOverloads constructor(
         // プログレスが増えたときに型抜き領域に色付けする
         // left は枠の太さを考慮しているので right の開始も枠の太さに合わせる
         rectValue.also {
-            it.set(innerLeft, innerTop, borderWidth + (innerRight - borderWidth) * progress, innerBottom)
+            it.set(innerLeft, innerTop, borderWidth + progress, innerBottom)
         }.let {
-            Log.d("RectValu", "$it")
             canvas.drawRect(it, progressValue)
         }
 
+        // 目盛り
         for (i in 1..9) {
             val position = tickInterval * i
             rectTick.also {
-                it.set(position, innerTop, position + borderWidth, innerBottom)
+                it.set(position, innerTop, borderWidth + position, innerBottom)
             }.let {
                 canvas.drawRect(it, tickBase)
             }
@@ -134,6 +139,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
     }
 
     fun setProgress(progress: Float) {
-        this.progress = progress
+        val current = progress * innerWidthWithoutTick
+        val tickCount = (current / (innerWidthWithoutTick / 10)).roundToInt()
+        this.progress = tickInterval * tickCount - if (tickCount > 0) borderWidth else 0.toFloat()
     }
 }
