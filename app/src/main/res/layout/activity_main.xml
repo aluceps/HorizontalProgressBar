@@ -31,7 +31,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:progress_border_width="4dp"
                 app:progress_color_base="#fff"
-                app:progress_color_primary="#0f0"
+                app:progress_color_inner="#00efb8"
+                app:progress_color_value="#0f0"
                 app:progress_corner_radius="12dp"
                 />
 

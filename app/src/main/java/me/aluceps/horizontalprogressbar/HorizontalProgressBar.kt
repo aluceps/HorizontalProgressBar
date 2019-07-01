@@ -15,8 +15,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var borderWidth = 0f
     private var cornerRadius = 0f
     private var colorBase = 0
-    private var colorPrimary = 0
-    private var colorSecondary = 0
+    private var colorInner = 0
+    private var colorValue = 0
 
     /**
      * 枠を表現するために枠の太さを加減
@@ -31,36 +31,39 @@ class HorizontalProgressBar @JvmOverloads constructor(
         Paint().apply {
             this.strokeWidth = strokeWidth
             this.color = colorBase
+            this.style = Paint.Style.FILL_AND_STROKE
             this.isAntiAlias = true
             this.strokeCap = Paint.Cap.ROUND
             this.strokeJoin = Paint.Join.ROUND
         }
     }
 
-    private val progressCutting by lazy {
+    private val progressInner by lazy {
         Paint().apply {
             this.strokeWidth = strokeWidth
+            this.color = colorInner
+            this.style = Paint.Style.FILL_AND_STROKE
             this.isAntiAlias = true
             this.strokeCap = Paint.Cap.ROUND
             this.strokeJoin = Paint.Join.ROUND
-            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
         }
     }
 
-    private val progressPrimary by lazy {
+    private val progressValue by lazy {
         Paint().apply {
             this.strokeWidth = strokeWidth
-            this.color = colorPrimary
+            this.color = colorValue
+            this.style = Paint.Style.FILL
             this.isAntiAlias = true
             this.strokeCap = Paint.Cap.ROUND
             this.strokeJoin = Paint.Join.ROUND
-            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
         }
     }
 
     private val rectBase by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
-    private val rectCutting by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
-    private val rectPrimary = RectF()
+    private val rectInner by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
+    private val rectValue = RectF()
 
     private var progress = 0f
 
@@ -75,12 +78,12 @@ class HorizontalProgressBar @JvmOverloads constructor(
                 .let { borderWidth = it }
             t.getDimension(R.styleable.HorizontalProgressBar_progress_corner_radius, 0f)
                 .let { cornerRadius = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_base, Color.GRAY)
+            t.getColor(R.styleable.HorizontalProgressBar_progress_color_base, Color.WHITE)
                 .let { colorBase = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_primary, Color.WHITE)
-                .let { colorPrimary = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_secondary, Color.LTGRAY)
-                .let { colorSecondary = it }
+            t.getColor(R.styleable.HorizontalProgressBar_progress_color_inner, Color.WHITE)
+                .let { colorInner = it }
+            t.getColor(R.styleable.HorizontalProgressBar_progress_color_value, Color.LTGRAY)
+                .let { colorValue = it }
         }
         typedArray?.recycle()
 
@@ -101,11 +104,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
 
         // 枠線を考慮した Rect で型抜きをする
-        canvas.drawRoundRect(rectCutting, innerRadius, innerRadius, progressCutting)
+        canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
 
         // 型抜き領域に色付けする
-        rectPrimary.also { it.set(innerLeft, innerTop, innerRight * progress, innerBottom) }.let {
-            canvas.drawRect(it, progressPrimary)
+        rectValue.also { it.set(innerLeft, innerTop, innerRight * progress, innerBottom) }.let {
+            canvas.drawRect(it, progressValue)
         }
     }
 

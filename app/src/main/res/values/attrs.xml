@@ -4,7 +4,7 @@
         <attr name="progress_border_width" format="dimension|reference" />
         <attr name="progress_corner_radius" format="dimension|reference" />
         <attr name="progress_color_base" format="color|reference" />
-        <attr name="progress_color_primary" format="color|reference" />
-        <attr name="progress_color_secondary" format="color|reference" />
+        <attr name="progress_color_inner" format="color|reference" />
+        <attr name="progress_color_value" format="color|reference" />
     </declare-styleable>
 </resources>
