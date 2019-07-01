@@ -13,7 +13,7 @@
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#00efb8"
+            android:background="#00b"
             android:padding="32dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -31,7 +31,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:progress_border_width="4dp"
                 app:progress_color_base="#fff"
-                app:progress_color_inner="#00efb8"
                 app:progress_color_value="#0f0"
                 app:progress_corner_radius="12dp"
                 />

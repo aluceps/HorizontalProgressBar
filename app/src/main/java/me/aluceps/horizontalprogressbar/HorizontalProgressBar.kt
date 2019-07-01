@@ -15,7 +15,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var borderWidth = 0f
     private var cornerRadius = 0f
     private var colorBase = 0
-    private var colorInner = 0
     private var colorValue = 0
 
     /**
@@ -41,11 +40,12 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private val progressInner by lazy {
         Paint().apply {
             this.strokeWidth = strokeWidth
-            this.color = colorInner
+            this.color = Color.BLACK
             this.style = Paint.Style.FILL_AND_STROKE
             this.isAntiAlias = true
             this.strokeCap = Paint.Cap.ROUND
             this.strokeJoin = Paint.Join.ROUND
+            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
         }
     }
 
@@ -53,11 +53,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
         Paint().apply {
             this.strokeWidth = strokeWidth
             this.color = colorValue
-            this.style = Paint.Style.FILL
             this.isAntiAlias = true
-            this.strokeCap = Paint.Cap.ROUND
-            this.strokeJoin = Paint.Join.ROUND
-            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+            this.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
         }
     }
 
@@ -80,8 +77,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
                 .let { cornerRadius = it }
             t.getColor(R.styleable.HorizontalProgressBar_progress_color_base, Color.WHITE)
                 .let { colorBase = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_inner, Color.WHITE)
-                .let { colorInner = it }
             t.getColor(R.styleable.HorizontalProgressBar_progress_color_value, Color.LTGRAY)
                 .let { colorValue = it }
         }
@@ -100,6 +95,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
         super.onDraw(canvas)
         if (canvas == null) return
 
+        canvas.saveLayer(rectBase, progressBase)
+
         // プログレスバーのベース
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
 
@@ -107,9 +104,14 @@ class HorizontalProgressBar @JvmOverloads constructor(
         canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
 
         // 型抜き領域に色付けする
-        rectValue.also { it.set(innerLeft, innerTop, innerRight * progress, innerBottom) }.let {
+        rectValue.also {
+            it.offset(borderWidth, innerTop)
+            it.set(innerLeft, innerTop, innerRight * progress, innerBottom)
+        }.let {
             canvas.drawRect(it, progressValue)
         }
+
+        canvas.restore()
     }
 
     fun setProgress(progress: Float) {
