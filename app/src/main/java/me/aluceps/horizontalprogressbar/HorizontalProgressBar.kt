@@ -1,9 +1,13 @@
 package me.aluceps.horizontalprogressbar
 
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -53,7 +57,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
         Paint().apply {
             color = colorValue
             isAntiAlias = true
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+//            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.ADD)
         }
     }
 
@@ -130,6 +135,18 @@ class HorizontalProgressBar @JvmOverloads constructor(
         val current = progress * innerWidthWithoutTick
         val tickCount = (current / tickInterval).roundToInt() - 1
         this.progress = current + borderWidth * if (tickCount < 0) 0 else tickCount
+    }
+
+    fun blink() {
+        ValueAnimator().apply {
+            setIntValues(Color.TRANSPARENT, colorValue)
+            setEvaluator(ArgbEvaluator())
+            addUpdateListener { progressValue.color = it.animatedValue as Int }
+            duration = 200
+            interpolator = DecelerateInterpolator()
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = 2
+        }.start()
     }
 
     companion object {

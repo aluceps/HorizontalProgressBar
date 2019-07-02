@@ -1,5 +1,7 @@
 package me.aluceps.horizontalprogressbar
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -27,9 +29,34 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                binding.progressBar.blink()
             }
         })
         binding.blink.setOnClickListener {
+            ValueAnimator().apply {
+                setFloatValues(60.0f)
+                addUpdateListener {
+                    val p = it.animatedValue as Float
+                    binding.progressBar.setProgress((p / 100))
+                }
+                duration = 1000
+                addListener(object : Animator.AnimatorListener {
+                    override fun onAnimationRepeat(animation: Animator?) {
+                    }
+
+                    override fun onAnimationEnd(animation: Animator?) {
+                        binding.progressBar.postDelayed({
+                            binding.progressBar.blink()
+                        }, 200)
+                    }
+
+                    override fun onAnimationCancel(animation: Animator?) {
+                    }
+
+                    override fun onAnimationStart(animation: Animator?) {
+                    }
+                })
+            }.start()
         }
     }
 }
