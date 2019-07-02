@@ -55,10 +55,32 @@
             android:layout_height="wrap_content"
             android:text="blink"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/add"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.7"
+            />
+
+        <Button
+            android:id="@+id/add"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="add 10"
+            app:layout_constraintBottom_toBottomOf="@id/blink"
+            app:layout_constraintEnd_toStartOf="@id/reset"
+            app:layout_constraintStart_toEndOf="@id/blink"
+            app:layout_constraintTop_toTopOf="@id/blink"
+            />
+
+        <Button
+            android:id="@+id/reset"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="reset"
+            app:layout_constraintBottom_toBottomOf="@id/blink"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/add"
+            app:layout_constraintTop_toTopOf="@id/blink"
             />
     </android.support.constraint.ConstraintLayout>
 </layout>

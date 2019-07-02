@@ -33,30 +33,43 @@ class MainActivity : AppCompatActivity() {
             }
         })
         binding.blink.setOnClickListener {
-            ValueAnimator().apply {
-                setFloatValues(60.0f)
-                addUpdateListener {
-                    val p = it.animatedValue as Float
-                    binding.progressBar.setProgress((p / 100))
-                }
-                duration = 1000
-                addListener(object : Animator.AnimatorListener {
-                    override fun onAnimationRepeat(animation: Animator?) {
-                    }
-
-                    override fun onAnimationEnd(animation: Animator?) {
-                        binding.progressBar.postDelayed({
-                            binding.progressBar.blink()
-                        }, 200)
-                    }
-
-                    override fun onAnimationCancel(animation: Animator?) {
-                    }
-
-                    override fun onAnimationStart(animation: Animator?) {
-                    }
-                })
-            }.start()
+            progressAnimation(60f) {
+                binding.progressBar.setProgress(it)
+            }
         }
+        binding.add.setOnClickListener {
+            //            progressAnimation(10f) {
+//            }
+        }
+        binding.reset.setOnClickListener {
+            binding.progressBar.reset()
+        }
+    }
+
+    private fun progressAnimation(value: Float, progress: (Float) -> Unit) {
+        ValueAnimator().apply {
+            setFloatValues(value)
+            addUpdateListener {
+                val p = it.animatedValue as Float
+                progress.invoke(p / 100)
+            }
+            duration = 1000
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    binding.progressBar.postDelayed({
+                        binding.progressBar.blink()
+                    }, 200)
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                }
+
+                override fun onAnimationStart(animation: Animator?) {
+                }
+            })
+        }.start()
     }
 }

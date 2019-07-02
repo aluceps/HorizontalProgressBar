@@ -6,7 +6,6 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import java.util.*
 import kotlin.math.roundToInt
@@ -135,6 +134,10 @@ class HorizontalProgressBar @JvmOverloads constructor(
         val current = progress * innerWidthWithoutTick
         val tickCount = (current / tickInterval).roundToInt() - 1
         this.progress = current + borderWidth * if (tickCount < 0) 0 else tickCount
+    }
+
+    fun reset() {
+        progress = 0f
     }
 
     fun blink() {
