@@ -10,77 +10,38 @@
         tools:context=".MainActivity"
         >
 
-        <android.support.constraint.ConstraintLayout
+        <include
+            android:id="@+id/progress_view"
+            layout="@layout/view_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#00efb8"
-            android:padding="32dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/button1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            >
-
-            <me.aluceps.horizontalprogressbar.HorizontalProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="0dp"
-                android:layout_height="24dp"
-                app:layout_constraintBottom_toTopOf="@id/seekbar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:progress_border_width="3dp"
-                app:progress_color_base="#fff"
-                app:progress_color_value="#fff"
-                app:progress_corner_radius="12dp"
-                />
-
-            <android.support.v7.widget.AppCompatSeekBar
-                android:id="@+id/seekbar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:max="100"
-                android:progress="0"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/progress_bar"
-                />
-        </android.support.constraint.ConstraintLayout>
+            app:layout_constraintVertical_chainStyle="packed"
+            />
 
         <Button
-            android:id="@+id/blink"
+            android:id="@+id/button1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="blink"
+            android:text="progress"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/add"
+            app:layout_constraintEnd_toStartOf="@id/button2"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.7"
+            app:layout_constraintTop_toBottomOf="@id/progress_view"
             />
 
         <Button
-            android:id="@+id/add"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="add 10"
-            app:layout_constraintBottom_toBottomOf="@id/blink"
-            app:layout_constraintEnd_toStartOf="@id/reset"
-            app:layout_constraintStart_toEndOf="@id/blink"
-            app:layout_constraintTop_toTopOf="@id/blink"
-            />
-
-        <Button
-            android:id="@+id/reset"
+            android:id="@+id/button2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="reset"
-            app:layout_constraintBottom_toBottomOf="@id/blink"
+            app:layout_constraintBottom_toBottomOf="@id/button1"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/add"
-            app:layout_constraintTop_toTopOf="@id/blink"
+            app:layout_constraintStart_toEndOf="@id/button1"
+            app:layout_constraintTop_toTopOf="@id/button1"
             />
     </android.support.constraint.ConstraintLayout>
 </layout>

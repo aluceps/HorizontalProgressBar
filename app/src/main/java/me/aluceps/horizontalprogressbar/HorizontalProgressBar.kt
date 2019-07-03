@@ -6,7 +6,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
-import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -145,10 +145,9 @@ class HorizontalProgressBar @JvmOverloads constructor(
             setIntValues(Color.TRANSPARENT, colorValue)
             setEvaluator(ArgbEvaluator())
             addUpdateListener { progressValue.color = it.animatedValue as Int }
-            duration = 200
-            interpolator = DecelerateInterpolator()
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = 2
+            duration = 300
+            interpolator = LinearInterpolator()
+            repeatCount = 1
         }.start()
     }
 

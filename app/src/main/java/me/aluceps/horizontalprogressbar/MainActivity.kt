@@ -17,11 +17,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding.seekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.progressView.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 seekBar?.max?.toFloat()?.let {
                     Log.d("Progress", "progress=${progress / it}")
-                    binding.progressBar.setProgress((progress / it))
+                    binding.progressView.progressBar.setProgress((progress / it))
                 }
             }
 
@@ -29,20 +29,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                binding.progressBar.blink()
+                binding.progressView.progressBar.blink()
             }
         })
-        binding.blink.setOnClickListener {
+        binding.button1.setOnClickListener {
             progressAnimation(60f) {
-                binding.progressBar.setProgress(it)
+                binding.progressView.progressBar.setProgress(it)
             }
         }
-        binding.add.setOnClickListener {
-            //            progressAnimation(10f) {
-//            }
-        }
-        binding.reset.setOnClickListener {
-            binding.progressBar.reset()
+        binding.button2.setOnClickListener {
+            binding.progressView.progressBar.reset()
         }
     }
 
@@ -59,8 +55,8 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onAnimationEnd(animation: Animator?) {
-                    binding.progressBar.postDelayed({
-                        binding.progressBar.blink()
+                    binding.progressView.progressBar.postDelayed({
+                        binding.progressView.progressBar.blink()
                     }, 200)
                 }
 
