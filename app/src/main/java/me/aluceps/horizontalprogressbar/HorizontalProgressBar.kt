@@ -25,6 +25,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var cornerRadius = DEFAULT_CORNER_RADIUS
     private var colorBase = DEFAULT_COLOR_BASE
     private var colorValue = DEFAULT_COLOR_VALUE
+    private var withoutTick = DEFAULT_WITHOUT_TICK
 
     private val innerLeft by lazy { 0 + borderWidth }
     private val innerTop by lazy { 0 + borderWidth }
@@ -53,7 +54,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
             color = Color.BLACK
             style = Paint.Style.FILL
             isAntiAlias = true
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            xfermode = if (withoutTick) {
+                PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+            } else {
+                PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            }
         }
     }
 
@@ -61,8 +66,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
         Paint().apply {
             color = colorValue
             isAntiAlias = true
-//            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.ADD)
+            xfermode = if (withoutTick) {
+                PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+            } else {
+                PorterDuffXfermode(PorterDuff.Mode.ADD)
+            }
         }
     }
 
@@ -88,7 +96,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
     private fun setup(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) {
         val typedArray = context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)?.apply {
-            getDimension(R.styleable.HorizontalProgressBar_progress_border_width, DEFAULT_WIDTH_BORDER).let { borderWidth = it }
+            getBoolean(R.styleable.HorizontalProgressBar_progress_without_tick, DEFAULT_WITHOUT_TICK).let { withoutTick = it }
+            if (!withoutTick) getDimension(R.styleable.HorizontalProgressBar_progress_border_width, DEFAULT_WIDTH_BORDER).let { borderWidth = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_corner_radius, DEFAULT_CORNER_RADIUS).let { cornerRadius = it }
             getColor(R.styleable.HorizontalProgressBar_progress_color_base, DEFAULT_COLOR_BASE).let { colorBase = it }
             getColor(R.styleable.HorizontalProgressBar_progress_color_value, DEFAULT_COLOR_VALUE).let { colorValue = it }
@@ -110,7 +119,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
         canvas.saveLayer(rectBase, progressBase)
         canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
-        canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
+        if (withoutTick) {
+            canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressBase)
+        } else {
+            canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
+        }
 
         rectValue.also {
             it.set(innerLeft, innerTop, borderWidth + progress, innerBottom)
@@ -118,12 +131,14 @@ class HorizontalProgressBar @JvmOverloads constructor(
             canvas.drawRect(it, progressValue)
         }
 
-        for (i in 1 until TICK_COUNT) {
-            val position = (tickInterval + borderWidth) * i
-            rectTick.also {
-                it.set(position, innerTop, borderWidth + position, innerBottom)
-            }.let {
-                canvas.drawRect(it, tickBase)
+        if (!withoutTick) {
+            for (i in 1 until TICK_COUNT) {
+                val position = (tickInterval + borderWidth) * i
+                rectTick.also {
+                    it.set(position, innerTop, borderWidth + position, innerBottom)
+                }.let {
+                    canvas.drawRect(it, tickBase)
+                }
             }
         }
 
@@ -157,5 +172,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
         private const val DEFAULT_CORNER_RADIUS = 0f
         private const val DEFAULT_COLOR_BASE = Color.WHITE
         private const val DEFAULT_COLOR_VALUE = Color.LTGRAY
+        private const val DEFAULT_WITHOUT_TICK = false
     }
 }

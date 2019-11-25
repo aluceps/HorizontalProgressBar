@@ -5,5 +5,6 @@
         <attr name="progress_corner_radius" format="dimension|reference" />
         <attr name="progress_color_base" format="color|reference" />
         <attr name="progress_color_value" format="color|reference" />
+        <attr name="progress_without_tick" format="boolean|reference" />
     </declare-styleable>
 </resources>
