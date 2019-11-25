@@ -3,7 +3,12 @@ package me.aluceps.horizontalprogressbar
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -11,15 +16,15 @@ import java.util.*
 import kotlin.math.roundToInt
 
 class HorizontalProgressBar @JvmOverloads constructor(
-    context: Context?,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+        context: Context?,
+        attrs: AttributeSet? = null,
+        defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var borderWidth = 0f
-    private var cornerRadius = 0f
-    private var colorBase = 0
-    private var colorValue = 0
+    private var borderWidth = DEFAULT_WIDTH_BORDER
+    private var cornerRadius = DEFAULT_CORNER_RADIUS
+    private var colorBase = DEFAULT_COLOR_BASE
+    private var colorValue = DEFAULT_COLOR_VALUE
 
     private val innerLeft by lazy { 0 + borderWidth }
     private val innerTop by lazy { 0 + borderWidth }
@@ -82,16 +87,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
     }
 
     private fun setup(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) {
-        val typedArray = context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)
-        typedArray?.let { t ->
-            t.getDimension(R.styleable.HorizontalProgressBar_progress_border_width, 0f)
-                .let { borderWidth = it }
-            t.getDimension(R.styleable.HorizontalProgressBar_progress_corner_radius, 0f)
-                .let { cornerRadius = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_base, Color.WHITE)
-                .let { colorBase = it }
-            t.getColor(R.styleable.HorizontalProgressBar_progress_color_value, Color.LTGRAY)
-                .let { colorValue = it }
+        val typedArray = context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)?.apply {
+            getDimension(R.styleable.HorizontalProgressBar_progress_border_width, DEFAULT_WIDTH_BORDER).let { borderWidth = it }
+            getDimension(R.styleable.HorizontalProgressBar_progress_corner_radius, DEFAULT_CORNER_RADIUS).let { cornerRadius = it }
+            getColor(R.styleable.HorizontalProgressBar_progress_color_base, DEFAULT_COLOR_BASE).let { colorBase = it }
+            getColor(R.styleable.HorizontalProgressBar_progress_color_value, DEFAULT_COLOR_VALUE).let { colorValue = it }
         }
         typedArray?.recycle()
 
@@ -153,5 +153,9 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
     companion object {
         private const val TICK_COUNT = 10
+        private const val DEFAULT_WIDTH_BORDER = 0f
+        private const val DEFAULT_CORNER_RADIUS = 0f
+        private const val DEFAULT_COLOR_BASE = Color.WHITE
+        private const val DEFAULT_COLOR_VALUE = Color.LTGRAY
     }
 }
