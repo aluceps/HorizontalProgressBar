@@ -2,6 +2,7 @@ package me.aluceps.horizontalprogressbar
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -21,71 +22,65 @@ class HorizontalProgressBar @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var borderWidth = DEFAULT_WIDTH_BORDER
-    private var cornerRadius = DEFAULT_CORNER_RADIUS
-    private var colorBase = DEFAULT_COLOR_BASE
-    private var colorValue = DEFAULT_COLOR_VALUE
     private var withoutTick = DEFAULT_WITHOUT_TICK
+    private var colorBackground = DEFAULT_COLOR_BACKGROUND
+    private var colorForeground = DEFAULT_COLOR_FOREGROUND
+    private var sizeBorder = DEFAULT_SIZE_BORDER
+    private var sizeRadius = DEFAULT_SIZE_RADIUS
 
-    private val innerLeft by lazy { 0 + borderWidth }
-    private val innerTop by lazy { 0 + borderWidth }
-    private val innerRight by lazy { width - borderWidth }
-    private val innerBottom by lazy { height - borderWidth }
-    private val innerRadius by lazy { cornerRadius - borderWidth }
+    // 目盛りを表示するときに使う枠内サイズ
+    private val border by lazy { if (withoutTick) 0f else sizeBorder }
+    private val radius by lazy { sizeRadius }
+    private val innerLeft by lazy { 0 + border }
+    private val innerTop by lazy { 0 + border }
+    private val innerRight by lazy { width - border }
+    private val innerBottom by lazy { height - border }
+    private val innerWidthWithoutTick by lazy { width - border * (2 + DEFAULT_TICK_COUNT - 1) }
+    private val tickInterval by lazy { innerWidthWithoutTick / DEFAULT_TICK_COUNT }
 
-    private val innerWidthWithoutTick by lazy {
-        width - borderWidth * (2 + TICK_COUNT - 1)
-    }
-
-    private val tickInterval by lazy {
-        innerWidthWithoutTick / TICK_COUNT
-    }
-
-    private val progressBase by lazy {
+    private val paintBackground by lazy {
         Paint().apply {
-            color = colorBase
+            color = colorBackground
             style = Paint.Style.FILL
             isAntiAlias = true
         }
     }
 
-    private val progressInner by lazy {
+    private val paintInsideOfBackground by lazy {
         Paint().apply {
             color = Color.BLACK
             style = Paint.Style.FILL
             isAntiAlias = true
-            xfermode = if (withoutTick) {
-                PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
-            } else {
-                PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            xfermode = when (withoutTick) {
+                true -> PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
+                else -> PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
             }
         }
     }
 
-    private val progressValue by lazy {
+    private val paintProgress by lazy {
         Paint().apply {
-            color = colorValue
+            color = colorForeground
             isAntiAlias = true
-            xfermode = if (withoutTick) {
-                PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
-            } else {
-                PorterDuffXfermode(PorterDuff.Mode.ADD)
+            xfermode = when (withoutTick) {
+                true -> PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+                else -> PorterDuffXfermode(PorterDuff.Mode.ADD)
             }
         }
     }
 
-    private val tickBase by lazy {
+    private val paintTick by lazy {
         Paint().apply {
-            color = colorBase
+            color = colorBackground
             style = Paint.Style.FILL
             isAntiAlias = true
             xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
         }
     }
 
-    private val rectBase by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
-    private val rectInner by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
-    private val rectValue = RectF()
+    private val rectBackground by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
+    private val rectInsideOfBackground by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
+    private val rectForeground = RectF()
     private val rectTick = RectF()
 
     private var progress = 0f
@@ -94,50 +89,50 @@ class HorizontalProgressBar @JvmOverloads constructor(
         setup(context, attrs, defStyleAttr)
     }
 
+    @SuppressLint("Recycle")
     private fun setup(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) {
-        val typedArray = context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)?.apply {
+        context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)?.apply {
             getBoolean(R.styleable.HorizontalProgressBar_progress_without_tick, DEFAULT_WITHOUT_TICK).let { withoutTick = it }
-            if (!withoutTick) getDimension(R.styleable.HorizontalProgressBar_progress_border_width, DEFAULT_WIDTH_BORDER).let { borderWidth = it }
-            getDimension(R.styleable.HorizontalProgressBar_progress_corner_radius, DEFAULT_CORNER_RADIUS).let { cornerRadius = it }
-            getColor(R.styleable.HorizontalProgressBar_progress_color_base, DEFAULT_COLOR_BASE).let { colorBase = it }
-            getColor(R.styleable.HorizontalProgressBar_progress_color_value, DEFAULT_COLOR_VALUE).let { colorValue = it }
-        }
-        typedArray?.recycle()
+            getColor(R.styleable.HorizontalProgressBar_progress_color_background, DEFAULT_COLOR_BACKGROUND).let { colorBackground = it }
+            getColor(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
+            getDimension(R.styleable.HorizontalProgressBar_progress_size_border, DEFAULT_SIZE_BORDER).let { sizeBorder = it }
+            getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
+        }?.recycle()
 
-        Timer().apply {
-            schedule(object : TimerTask() {
-                override fun run() {
-                    post { invalidate() }
-                }
-            }, 10, 10)
-        }
+        Timer().schedule(object : TimerTask() {
+            override fun run() {
+                post { invalidate() }
+            }
+        }, 10, 10)
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
 
-        canvas.saveLayer(rectBase, progressBase)
-        canvas.drawRoundRect(rectBase, cornerRadius, cornerRadius, progressBase)
-        if (withoutTick) {
-            canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressBase)
-        } else {
-            canvas.drawRoundRect(rectInner, innerRadius, innerRadius, progressInner)
+        canvas.saveLayer(rectBackground, paintBackground)
+        canvas.drawRoundRect(rectBackground, radius, radius, paintBackground)
+
+        when (withoutTick) {
+            true -> paintBackground
+            else -> paintInsideOfBackground
+        }.let {
+            canvas.drawRoundRect(rectInsideOfBackground, radius, radius, it)
         }
 
-        rectValue.also {
-            it.set(innerLeft, innerTop, borderWidth + progress, innerBottom)
+        rectForeground.apply {
+            set(innerLeft, innerTop, border + progress, innerBottom)
         }.let {
-            canvas.drawRect(it, progressValue)
+            canvas.drawRect(it, paintProgress)
         }
 
         if (!withoutTick) {
-            for (i in 1 until TICK_COUNT) {
-                val position = (tickInterval + borderWidth) * i
-                rectTick.also {
-                    it.set(position, innerTop, borderWidth + position, innerBottom)
+            for (i in 1 until DEFAULT_TICK_COUNT) {
+                val position = (tickInterval + border) * i
+                rectTick.apply {
+                    set(position, innerTop, border + position, innerBottom)
                 }.let {
-                    canvas.drawRect(it, tickBase)
+                    canvas.drawRect(it, paintTick)
                 }
             }
         }
@@ -147,31 +142,35 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
     fun setProgress(progress: Float) {
         val current = progress * innerWidthWithoutTick
-        val tickCount = (current / tickInterval).roundToInt() - 1
-        this.progress = current + borderWidth * if (tickCount < 0) 0 else tickCount
-    }
-
-    fun reset() {
-        progress = 0f
+        this.progress = when (withoutTick) {
+            true -> current
+            else -> ((current / tickInterval).roundToInt() - 1).let { tickCount ->
+                current + border * if (tickCount < 0) 0 else tickCount
+            }
+        }
     }
 
     fun blink() {
         ValueAnimator().apply {
-            setIntValues(Color.TRANSPARENT, colorValue)
+            setIntValues(Color.TRANSPARENT, colorForeground)
             setEvaluator(ArgbEvaluator())
-            addUpdateListener { progressValue.color = it.animatedValue as Int }
+            addUpdateListener { paintProgress.color = it.animatedValue as Int }
             duration = 300
             interpolator = LinearInterpolator()
             repeatCount = 1
         }.start()
     }
 
+    fun reset() {
+        progress = 0f
+    }
+
     companion object {
-        private const val TICK_COUNT = 10
-        private const val DEFAULT_WIDTH_BORDER = 0f
-        private const val DEFAULT_CORNER_RADIUS = 0f
-        private const val DEFAULT_COLOR_BASE = Color.WHITE
-        private const val DEFAULT_COLOR_VALUE = Color.LTGRAY
         private const val DEFAULT_WITHOUT_TICK = false
+        private const val DEFAULT_COLOR_BACKGROUND = Color.LTGRAY
+        private const val DEFAULT_COLOR_FOREGROUND = Color.GREEN
+        private const val DEFAULT_SIZE_BORDER = 0f
+        private const val DEFAULT_SIZE_RADIUS = 0f
+        private const val DEFAULT_TICK_COUNT = 10
     }
 }

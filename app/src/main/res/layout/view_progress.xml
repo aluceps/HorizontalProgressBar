@@ -18,10 +18,10 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:progress_border_width="3dp"
-            app:progress_color_base="#fff"
-            app:progress_color_value="#9f0"
-            app:progress_corner_radius="12dp"
+            app:progress_color_background="#fff"
+            app:progress_color_foreground="#0f0"
+            app:progress_size_border="3dp"
+            app:progress_size_radius="12dp"
             app:progress_without_tick="true"
             />
 
