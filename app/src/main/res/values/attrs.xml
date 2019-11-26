@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="HorizontalProgressBar">
-        <attr name="progress_without_tick" format="boolean|reference" />
+        <attr name="progress_decoration_type" format="integer">
+            <enum name="tick" value="0" />
+            <enum name="line" value="1" />
+        </attr>
         <attr name="progress_color_background" format="color|reference" />
         <attr name="progress_color_foreground" format="color|reference" />
+        <attr name="progress_color_decoration" format="color|reference" />
         <attr name="progress_size_border" format="dimension|reference" />
         <attr name="progress_size_radius" format="dimension|reference" />
+        <attr name="progress_size_decoration_width" format="dimension|reference" />
     </declare-styleable>
 </resources>

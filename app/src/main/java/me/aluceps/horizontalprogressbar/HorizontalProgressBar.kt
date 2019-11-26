@@ -16,20 +16,32 @@ import android.view.animation.LinearInterpolator
 import java.util.*
 import kotlin.math.roundToInt
 
+enum class DecorationType(val id: Int) {
+    Tick(0),
+    Line(1);
+
+    companion object {
+        fun fromInt(value: Int) =
+                values().find { it.id == value } ?: Tick
+    }
+}
+
 class HorizontalProgressBar @JvmOverloads constructor(
         context: Context?,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var withoutTick = DEFAULT_WITHOUT_TICK
+    private var decorationType = DecorationType.Tick
     private var colorBackground = DEFAULT_COLOR_BACKGROUND
     private var colorForeground = DEFAULT_COLOR_FOREGROUND
+    private var colorDecoration = DEFAULT_COLOR_DECORATION
     private var sizeBorder = DEFAULT_SIZE_BORDER
     private var sizeRadius = DEFAULT_SIZE_RADIUS
+    private var sizeDecorationWidth = DEFAULT_SIZE_DECORATION_WIDTH
 
     // 目盛りを表示するときに使う枠内サイズ
-    private val border by lazy { if (withoutTick) 0f else sizeBorder }
+    private val border by lazy { if (decorationType == DecorationType.Tick) sizeBorder else 0f }
     private val radius by lazy { sizeRadius }
     private val innerLeft by lazy { 0 + border }
     private val innerTop by lazy { 0 + border }
@@ -37,6 +49,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private val innerBottom by lazy { height - border }
     private val innerWidthWithoutTick by lazy { width - border * (2 + DEFAULT_TICK_COUNT - 1) }
     private val tickInterval by lazy { innerWidthWithoutTick / DEFAULT_TICK_COUNT }
+    private val lineInterval by lazy { width / DEFAULT_LINE_COUNT * 1f }
 
     private val paintBackground by lazy {
         Paint().apply {
@@ -51,9 +64,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
             color = Color.BLACK
             style = Paint.Style.FILL
             isAntiAlias = true
-            xfermode = when (withoutTick) {
-                true -> PorterDuffXfermode(PorterDuff.Mode.DST_ATOP)
-                else -> PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            xfermode = when (decorationType) {
+                // 内側をくり抜く
+                DecorationType.Tick -> PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+                // 通常の描画
+                DecorationType.Line -> PorterDuffXfermode(PorterDuff.Mode.DST)
             }
         }
     }
@@ -62,9 +77,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
         Paint().apply {
             color = colorForeground
             isAntiAlias = true
-            xfermode = when (withoutTick) {
-                true -> PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
-                else -> PorterDuffXfermode(PorterDuff.Mode.ADD)
+            xfermode = when (decorationType) {
+                // 透明な部分に着色
+                DecorationType.Tick -> PorterDuffXfermode(PorterDuff.Mode.ADD)
+                // 重なる部分に着色
+                DecorationType.Line -> PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
             }
         }
     }
@@ -78,11 +95,20 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
     }
 
+    private val paintDecoration by lazy {
+        Paint().apply {
+            color = colorDecoration
+            style = Paint.Style.STROKE
+            strokeWidth = sizeDecorationWidth
+            isAntiAlias = true
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+        }
+    }
+
     private val rectBackground by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInsideOfBackground by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
     private val rectForeground = RectF()
     private val rectTick = RectF()
-
     private var progress = 0f
 
     init {
@@ -92,11 +118,21 @@ class HorizontalProgressBar @JvmOverloads constructor(
     @SuppressLint("Recycle")
     private fun setup(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) {
         context?.obtainStyledAttributes(attrs, R.styleable.HorizontalProgressBar, defStyleAttr, 0)?.apply {
-            getBoolean(R.styleable.HorizontalProgressBar_progress_without_tick, DEFAULT_WITHOUT_TICK).let { withoutTick = it }
-            getColor(R.styleable.HorizontalProgressBar_progress_color_background, DEFAULT_COLOR_BACKGROUND).let { colorBackground = it }
-            getColor(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
+            getInt(R.styleable.HorizontalProgressBar_progress_decoration_type, DecorationType.Tick.id).let { decorationType = DecorationType.fromInt(it) }
+            when (decorationType) {
+                DecorationType.Tick -> {
+                    colorBackground = Color.WHITE
+                    colorForeground = Color.WHITE
+                }
+                DecorationType.Line -> {
+                    getColor(R.styleable.HorizontalProgressBar_progress_color_background, DEFAULT_COLOR_BACKGROUND).let { colorBackground = it }
+                    getColor(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
+                }
+            }
+            getColor(R.styleable.HorizontalProgressBar_progress_color_decoration, DEFAULT_COLOR_DECORATION).let { colorDecoration = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_border, DEFAULT_SIZE_BORDER).let { sizeBorder = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
+            getDimension(R.styleable.HorizontalProgressBar_progress_size_decoration_width, DEFAULT_SIZE_DECORATION_WIDTH).let { sizeDecorationWidth = it }
         }?.recycle()
 
         Timer().schedule(object : TimerTask() {
@@ -110,30 +146,43 @@ class HorizontalProgressBar @JvmOverloads constructor(
         super.onDraw(canvas)
         if (canvas == null) return
 
+        // 背景部分の描画
         canvas.saveLayer(rectBackground, paintBackground)
         canvas.drawRoundRect(rectBackground, radius, radius, paintBackground)
 
-        when (withoutTick) {
-            true -> paintBackground
-            else -> paintInsideOfBackground
+        // プログレスの描画領域を調整
+        when (decorationType) {
+            DecorationType.Tick -> paintInsideOfBackground
+            DecorationType.Line -> paintBackground
         }.let {
             canvas.drawRoundRect(rectInsideOfBackground, radius, radius, it)
         }
 
+        // プログレスの描画
         rectForeground.apply {
             set(innerLeft, innerTop, border + progress, innerBottom)
         }.let {
             canvas.drawRect(it, paintProgress)
         }
 
-        if (!withoutTick) {
-            for (i in 1 until DEFAULT_TICK_COUNT) {
+        // 装飾部分
+        when (decorationType) {
+            // 目盛りはプログレスに重ねて XOR するので
+            // プログレスの描画よりも上にして描画する
+            DecorationType.Tick -> for (i in 1 until DEFAULT_TICK_COUNT) {
                 val position = (tickInterval + border) * i
                 rectTick.apply {
                     set(position, innerTop, border + position, innerBottom)
                 }.let {
                     canvas.drawRect(it, paintTick)
                 }
+            }
+            // 斜めの飾り線描画
+            DecorationType.Line -> for (i in 0..DEFAULT_LINE_COUNT) {
+                val gap = lineInterval * 0.8f
+                val start = lineInterval * i.toFloat() - gap
+                val end = start + lineInterval * 2f - gap
+                canvas.drawLine(start, innerTop, end, innerBottom, paintDecoration)
             }
         }
 
@@ -142,11 +191,11 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
     fun setProgress(progress: Float) {
         val current = progress * innerWidthWithoutTick
-        this.progress = when (withoutTick) {
-            true -> current
-            else -> ((current / tickInterval).roundToInt() - 1).let { tickCount ->
+        this.progress = when (decorationType) {
+            DecorationType.Tick -> ((current / tickInterval).roundToInt() - 1).let { tickCount ->
                 current + border * if (tickCount < 0) 0 else tickCount
             }
+            DecorationType.Line -> current
         }
     }
 
@@ -166,11 +215,13 @@ class HorizontalProgressBar @JvmOverloads constructor(
     }
 
     companion object {
-        private const val DEFAULT_WITHOUT_TICK = false
         private const val DEFAULT_COLOR_BACKGROUND = Color.LTGRAY
         private const val DEFAULT_COLOR_FOREGROUND = Color.GREEN
+        private const val DEFAULT_COLOR_DECORATION = Color.GRAY
         private const val DEFAULT_SIZE_BORDER = 0f
         private const val DEFAULT_SIZE_RADIUS = 0f
+        private const val DEFAULT_SIZE_DECORATION_WIDTH = 0f
         private const val DEFAULT_TICK_COUNT = 10
+        private const val DEFAULT_LINE_COUNT = 30
     }
 }

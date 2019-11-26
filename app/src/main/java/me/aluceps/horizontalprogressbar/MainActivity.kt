@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
                 seekBar?.max?.toFloat()?.let {
                     Log.d("Progress", "progress=${progress / it}")
                     binding.progressView.progressBar.setProgress((progress / it))
+                    binding.progressView.progressText.text = "%.0f%%".format(progress / it * 100)
                 }
             }
 
@@ -35,10 +36,12 @@ class MainActivity : AppCompatActivity() {
         binding.button1.setOnClickListener {
             progressAnimation(60f) {
                 binding.progressView.progressBar.setProgress(it)
+                binding.progressView.progressText.text = "%.0f%%".format(it * 100)
             }
         }
         binding.button2.setOnClickListener {
             binding.progressView.progressBar.reset()
+            binding.progressView.progressText.text = "0%"
         }
     }
 
