@@ -93,15 +93,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
     }
 
-    private val paintTick by lazy {
-        Paint().apply {
-            color = colorBackground
-            style = Paint.Style.FILL
-            isAntiAlias = true
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
-        }
-    }
-
     private val rectBackground by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInsideOfBackground by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
     private val rectMask by lazy { rectInsideOfBackground.let { Rect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) } }
@@ -175,17 +166,25 @@ class HorizontalProgressBar @JvmOverloads constructor(
                 RectF().apply {
                     set(position, innerTop, border + position, innerBottom)
                 }.let {
-                    canvas.drawRect(it, paintTick)
+                    canvas.drawRect(it, Paint().apply {
+                        color = colorBackground
+                        style = Paint.Style.FILL
+                        isAntiAlias = true
+                        xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
+                    })
                 }
             }
         }
 
         // 画像でプログレスを描画
         if (decorationType == DecorationType.Line) {
+            // 両端を角丸にするための投影先
             canvas.drawRoundRect(rectInsideOfBackground, innerLeft, innerTop, Paint().apply {
+                isAntiAlias = true
                 xfermode = PorterDuffXfermode(PorterDuff.Mode.DST)
             })
 
+            // 投影する前景
             bitmapForeground = BitmapFactory.decodeResource(resources, imageForegroundResId)
             if (bitmapForeground == null) {
                 canvas.drawRect(rectMask, paintProgress)
@@ -195,12 +194,27 @@ class HorizontalProgressBar @JvmOverloads constructor(
                 })
             }
 
+            // プログレスは開始座標Xを動かす
             RectF().apply {
                 set(currentProgress, innerTop, innerRight, innerBottom)
             }.let {
                 canvas.drawRect(it, Paint().apply {
                     color = colorBackground
+                    isAntiAlias = true
                     xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+                })
+            }
+
+            // 縁取り
+            if (sizeBorder > 0f) {
+                val margin = sizeBorder * 0.5f
+                canvas.drawRoundRect(rectInsideOfBackground.let {
+                    RectF(it.left + margin, it.top + margin, it.right - margin, it.bottom - margin)
+                }, radius, radius, Paint().apply {
+                    color = Color.argb(10, 0, 0, 0)
+                    style = Paint.Style.STROKE
+                    strokeWidth = sizeBorder
+                    isAntiAlias = true
                 })
             }
         }
