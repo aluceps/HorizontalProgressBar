@@ -4,11 +4,14 @@ import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
@@ -39,17 +42,21 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var sizeBorder = DEFAULT_SIZE_BORDER
     private var sizeRadius = DEFAULT_SIZE_RADIUS
     private var sizeDecorationWidth = DEFAULT_SIZE_DECORATION_WIDTH
+    private var imageForegroundResId = 0
 
-    // 目盛りを表示するときに使う枠内サイズ
+    // 枠や角丸の属性情報は直接使わない
     private val border by lazy { if (decorationType == DecorationType.Tick) sizeBorder else 0f }
     private val radius by lazy { sizeRadius }
+
+    // 目盛りを表示するときに使う枠内サイズ
     private val innerLeft by lazy { 0 + border }
     private val innerTop by lazy { 0 + border }
     private val innerRight by lazy { width - border }
     private val innerBottom by lazy { height - border }
     private val innerWidthWithoutTick by lazy { width - border * (2 + DEFAULT_TICK_COUNT - 1) }
+
+    // 目盛りの間隔
     private val tickInterval by lazy { innerWidthWithoutTick / DEFAULT_TICK_COUNT }
-    private val lineInterval by lazy { width / DEFAULT_LINE_COUNT * 1f }
 
     private val paintBackground by lazy {
         Paint().apply {
@@ -95,21 +102,12 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
     }
 
-    private val paintDecoration by lazy {
-        Paint().apply {
-            color = colorDecoration
-            style = Paint.Style.STROKE
-            strokeWidth = sizeDecorationWidth
-            isAntiAlias = true
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
-        }
-    }
-
     private val rectBackground by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInsideOfBackground by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
-    private val rectForeground = RectF()
-    private val rectTick = RectF()
+    private val rectMask by lazy { rectInsideOfBackground.let { Rect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) } }
+
     private var progress = 0f
+    private var bitmapForeground: Bitmap? = null
 
     init {
         setup(context, attrs, defStyleAttr)
@@ -133,6 +131,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
             getDimension(R.styleable.HorizontalProgressBar_progress_size_border, DEFAULT_SIZE_BORDER).let { sizeBorder = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_decoration_width, DEFAULT_SIZE_DECORATION_WIDTH).let { sizeDecorationWidth = it }
+            getResourceId(R.styleable.HorizontalProgressBar_progress_image_foreground, 0).let { imageForegroundResId = it }
         }?.recycle()
 
         Timer().schedule(object : TimerTask() {
@@ -142,6 +141,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }, 10, 10)
     }
 
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
@@ -159,34 +159,61 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
 
         // プログレスの描画
-        rectForeground.apply {
-            set(innerLeft, innerTop, border + progress, innerBottom)
-        }.let {
-            canvas.drawRect(it, paintProgress)
-        }
+        val currentProgress = border + progress
 
-        // 装飾部分
-        when (decorationType) {
-            // 目盛りはプログレスに重ねて XOR するので
-            // プログレスの描画よりも上にして描画する
-            DecorationType.Tick -> for (i in 1 until DEFAULT_TICK_COUNT) {
+        // 目盛りはプログレスに重ねて XOR するので
+        // プログレスの描画よりも上にして描画する
+        if (decorationType == DecorationType.Tick) {
+            RectF().apply {
+                set(innerLeft, innerTop, currentProgress, innerBottom)
+            }.let {
+                canvas.drawRect(it, paintProgress)
+            }
+
+            for (i in 1 until DEFAULT_TICK_COUNT) {
                 val position = (tickInterval + border) * i
-                rectTick.apply {
+                RectF().apply {
                     set(position, innerTop, border + position, innerBottom)
                 }.let {
                     canvas.drawRect(it, paintTick)
                 }
             }
-            // 斜めの飾り線描画
-            DecorationType.Line -> for (i in 0..DEFAULT_LINE_COUNT) {
-                val gap = lineInterval * 0.8f
-                val start = lineInterval * i.toFloat() - gap
-                val end = start + lineInterval * 2f - gap
-                canvas.drawLine(start, innerTop, end, innerBottom, paintDecoration)
+        }
+
+        // 画像でプログレスを描画
+        if (decorationType == DecorationType.Line) {
+            canvas.drawRoundRect(rectInsideOfBackground, innerLeft, innerTop, Paint().apply {
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST)
+            })
+
+            bitmapForeground = BitmapFactory.decodeResource(resources, imageForegroundResId)
+            if (bitmapForeground == null) {
+                canvas.drawRect(rectMask, paintProgress)
+            } else {
+                canvas.drawBitmap(bitmapForeground!!, null, rectInsideOfBackground, Paint().apply {
+                    xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+                })
+            }
+
+            RectF().apply {
+                set(currentProgress, innerTop, innerRight, innerBottom)
+            }.let {
+                canvas.drawRect(it, Paint().apply {
+                    color = colorBackground
+                    xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+                })
             }
         }
 
         canvas.restore()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (bitmapForeground != null && bitmapForeground?.isRecycled != true) {
+            bitmapForeground?.recycle()
+            bitmapForeground = null
+        }
     }
 
     fun setProgress(progress: Float) {
@@ -222,6 +249,5 @@ class HorizontalProgressBar @JvmOverloads constructor(
         private const val DEFAULT_SIZE_RADIUS = 0f
         private const val DEFAULT_SIZE_DECORATION_WIDTH = 0f
         private const val DEFAULT_TICK_COUNT = 10
-        private const val DEFAULT_LINE_COUNT = 30
     }
 }

@@ -43,6 +43,9 @@ class MainActivity : AppCompatActivity() {
             binding.progressView.progressBar.reset()
             binding.progressView.progressText.text = "0%"
         }
+        binding.root.post {
+            binding.progressView.progressBar.setProgress(0.66f)
+        }
     }
 
     private fun progressAnimation(value: Float, progress: (Float) -> Unit) {
