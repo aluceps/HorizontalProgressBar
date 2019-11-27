@@ -24,6 +24,7 @@
             app:progress_color_decoration="#ccF09300"
             app:progress_color_foreground="#FFBD1B"
             app:progress_decoration_type="line"
+            app:progress_image_foreground="@mipmap/bk_progress"
             app:progress_size_border="3dp"
             app:progress_size_decoration_width="2dp"
             app:progress_size_radius="12dp"
