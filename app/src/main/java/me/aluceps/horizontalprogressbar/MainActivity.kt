@@ -2,6 +2,7 @@ package me.aluceps.horizontalprogressbar
 
 import android.animation.Animator
 import android.animation.ValueAnimator
+import android.databinding.BindingAdapter
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -17,34 +18,68 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding.progressView.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                seekBar?.max?.toFloat()?.let {
-                    Log.d("Progress", "progress=${progress / it}")
-                    binding.progressView.progressBar.setProgress((progress / it))
-                    binding.progressView.progressText.text = "%.0f%%".format(progress / it * 100)
+        binding.progressTickView.apply {
+            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                ) {
+                    seekBar?.max?.toFloat()?.let {
+                        Log.d("Progress", "progress=${progress / it}")
+                        progressBar.progress = progress / it
+                        progressText.text = TEXT_FORMAT.format(progress / it * 100)
+                    }
+                }
+            })
+            progress.setOnClickListener {
+                progressAnimation(60f) {
+                    progressBar.progress = it
+                    progressText.text = TEXT_FORMAT.format(it * 100)
                 }
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            reset.setOnClickListener {
+                progressBar.reset()
+                progressText.text = "0%"
             }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                binding.progressView.progressBar.blink()
-            }
-        })
-        binding.button1.setOnClickListener {
-            progressAnimation(60f) {
-                binding.progressView.progressBar.setProgress(it)
-                binding.progressView.progressText.text = "%.0f%%".format(it * 100)
+            0.8f.let {
+                progressBar.progress = it
+                progressText.text = TEXT_FORMAT.format(it * 100)
             }
         }
-        binding.button2.setOnClickListener {
-            binding.progressView.progressBar.reset()
-            binding.progressView.progressText.text = "0%"
-        }
-        binding.root.post {
-            binding.progressView.progressBar.setProgress(0.66f)
+
+        binding.progressLineView.apply {
+            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                ) {
+                    seekBar?.max?.toFloat()?.let {
+                        Log.d("Progress", "progress=${progress / it}")
+                        progressBar.progress = progress / it
+                        progressText.text = TEXT_FORMAT.format(progress / it * 100)
+                    }
+                }
+            })
+            progress.setOnClickListener {
+                progressAnimation(60f) {
+                    progressBar.progress = it
+                    progressText.text = TEXT_FORMAT.format(it * 100)
+                }
+            }
+            reset.setOnClickListener {
+                progressBar.reset()
+                progressText.text = "0%"
+            }
+            0.8f.let {
+                progressBar.progress = it
+                progressText.text = TEXT_FORMAT.format(it * 100)
+            }
         }
     }
 
@@ -57,21 +92,25 @@ class MainActivity : AppCompatActivity() {
             }
             duration = 1000
             addListener(object : Animator.AnimatorListener {
-                override fun onAnimationRepeat(animation: Animator?) {
-                }
-
+                override fun onAnimationRepeat(animation: Animator?) {}
+                override fun onAnimationCancel(animation: Animator?) {}
+                override fun onAnimationStart(animation: Animator?) {}
                 override fun onAnimationEnd(animation: Animator?) {
-                    binding.progressView.progressBar.postDelayed({
-                        binding.progressView.progressBar.blink()
+                    binding.progressTickView.progressBar.postDelayed({
+                        binding.progressTickView.progressBar.blink()
                     }, 200)
-                }
-
-                override fun onAnimationCancel(animation: Animator?) {
-                }
-
-                override fun onAnimationStart(animation: Animator?) {
                 }
             })
         }.start()
     }
+
+    companion object {
+        private const val TEXT_FORMAT = "%.0f%%"
+    }
+}
+
+@BindingAdapter("set_decoration_type")
+fun HorizontalProgressBar.setDecorationType(type: DecorationType?) {
+    if (type == null) return
+    setDecorationType(type)
 }

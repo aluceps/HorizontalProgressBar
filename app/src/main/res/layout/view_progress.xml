@@ -4,58 +4,93 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
 
+    <data>
+
+        <variable
+            name="type"
+            type="me.aluceps.horizontalprogressbar.DecorationType"
+            />
+    </data>
+
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#04bb89"
-        android:padding="16dp"
-        tools:background="#04bb89"
         >
 
-        <me.aluceps.horizontalprogressbar.HorizontalProgressBar
-            android:id="@+id/progress_bar"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            app:layout_constraintBottom_toTopOf="@id/seek_bar"
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#04bb89"
+            android:padding="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:progress_color_background="#ddd"
-            app:progress_color_decoration="#ccF09300"
-            app:progress_color_foreground="#FFBD1B"
-            app:progress_decoration_type="line"
-            app:progress_image_foreground="@mipmap/bk_progress"
-            app:progress_size_border="2dp"
-            app:progress_size_decoration_width="2dp"
-            app:progress_size_radius="12dp"
-            />
+            >
 
-        <TextView
-            android:id="@+id/progress_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:gravity="center"
-            android:textColor="#fff"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/progress_bar"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/progress_bar"
-            tools:text="77%"
-            />
+            <me.aluceps.horizontalprogressbar.HorizontalProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:progress_color_background="#ddd"
+                app:progress_color_decoration="#ccF09300"
+                app:progress_color_foreground="#FFBD1B"
+                app:progress_image_foreground="@mipmap/bk_progress"
+                app:progress_size_border="2dp"
+                app:progress_size_decoration_width="2dp"
+                app:progress_size_radius="12dp"
+                app:set_decoration_type="@{type}"
+                />
 
-        <android.support.v7.widget.AppCompatSeekBar
-            android:id="@+id/seek_bar"
+            <TextView
+                android:id="@+id/progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:gravity="center"
+                android:textColor="#fff"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/progress_bar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/progress_bar"
+                tools:text="77%"
+                />
+
+            <android.support.v7.widget.AppCompatSeekBar
+                android:id="@+id/seek_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:max="100"
+                android:progress="0"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/progress_bar"
+                />
+        </android.support.constraint.ConstraintLayout>
+
+        <Button
+            android:id="@+id/progress"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:max="100"
-            android:progress="0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="progress"
+            app:layout_constraintEnd_toStartOf="@id/reset"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/progress_bar"
+            app:layout_constraintTop_toBottomOf="@id/container"
+            />
+
+        <Button
+            android:id="@+id/reset"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="reset"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/progress"
+            app:layout_constraintTop_toTopOf="@id/progress"
             />
     </android.support.constraint.ConstraintLayout>
 </layout>

@@ -4,6 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
 
+    <data>
+
+        <import type="me.aluceps.horizontalprogressbar.DecorationType" />
+    </data>
+
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -11,37 +16,29 @@
         >
 
         <include
-            android:id="@+id/progress_view"
+            android:id="@+id/progress_tick_view"
             layout="@layout/view_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@id/button1"
+            app:layout_constraintBottom_toTopOf="@id/progress_line_view"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="packed"
+            app:type="@{DecorationType.Tick}"
             />
 
-        <Button
-            android:id="@+id/button1"
-            android:layout_width="0dp"
+        <include
+            android:id="@+id/progress_line_view"
+            layout="@layout/view_progress"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="progress"
+            android:layout_marginTop="32dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/button2"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/progress_view"
-            />
-
-        <Button
-            android:id="@+id/button2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="reset"
-            app:layout_constraintBottom_toBottomOf="@id/button1"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/button1"
-            app:layout_constraintTop_toTopOf="@id/button1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/progress_tick_view"
+            app:type="@{DecorationType.Line}"
             />
     </android.support.constraint.ConstraintLayout>
 </layout>
