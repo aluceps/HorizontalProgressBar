@@ -14,6 +14,7 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
 import java.util.*
@@ -45,38 +46,24 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var imageForegroundResId = 0
 
     // 枠や角丸の属性情報は直接使わない
-    private val border by lazy { if (decorationType == DecorationType.Tick) sizeBorder else 0f }
-    private val radius by lazy { sizeRadius }
+    private val border get() = if (decorationType == DecorationType.Tick) sizeBorder else 0f
+    private val radius get() = sizeRadius
 
     // 目盛りを表示するときに使う枠内サイズ
-    private val innerLeft by lazy { 0 + border }
-    private val innerTop by lazy { 0 + border }
-    private val innerRight by lazy { width - border }
-    private val innerBottom by lazy { height - border }
-    private val innerWidthWithoutTick by lazy { width - border * (2 + DEFAULT_TICK_COUNT - 1) }
+    private val innerLeft get() = 0 + border
+    private val innerTop get() = 0 + border
+    private val innerRight get() = width - border
+    private val innerBottom get() = height - border
+    private val innerWidthWithoutTick get() = width - border * (2 + DEFAULT_TICK_COUNT - 1)
 
     // 目盛りの間隔
-    private val tickInterval by lazy { innerWidthWithoutTick / DEFAULT_TICK_COUNT }
+    private val tickInterval get() = innerWidthWithoutTick / DEFAULT_TICK_COUNT
 
     private val paintBackground by lazy {
         Paint().apply {
             color = colorBackground
             style = Paint.Style.FILL
             isAntiAlias = true
-        }
-    }
-
-    private val paintInsideOfBackground by lazy {
-        Paint().apply {
-            color = Color.BLACK
-            style = Paint.Style.FILL
-            isAntiAlias = true
-            xfermode = when (decorationType) {
-                // 内側をくり抜く
-                DecorationType.Tick -> PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-                // 通常の描画
-                DecorationType.Line -> PorterDuffXfermode(PorterDuff.Mode.DST)
-            }
         }
     }
 
@@ -95,10 +82,17 @@ class HorizontalProgressBar @JvmOverloads constructor(
 
     private val rectBackground by lazy { RectF(0f, 0f, width.toFloat(), height.toFloat()) }
     private val rectInsideOfBackground by lazy { RectF(innerLeft, innerTop, innerRight, innerBottom) }
-    private val rectMask by lazy { rectInsideOfBackground.let { Rect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) } }
-
-    private var progress = 0f
     private var bitmapForeground: Bitmap? = null
+
+    var progress = DEFAULT_PROGRESS_VALUE
+    private val progressWidth: Float
+        get() {
+            val width = progress * innerWidthWithoutTick
+            return when (decorationType) {
+                DecorationType.Tick -> ((width / tickInterval).roundToInt() - 1).let { width - border * if (it < 0) 0 else it }
+                DecorationType.Line -> width
+            }
+        }
 
     init {
         setup(context, attrs, defStyleAttr)
@@ -123,6 +117,9 @@ class HorizontalProgressBar @JvmOverloads constructor(
             getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_decoration_width, DEFAULT_SIZE_DECORATION_WIDTH).let { sizeDecorationWidth = it }
             getResourceId(R.styleable.HorizontalProgressBar_progress_image_foreground, 0).let { imageForegroundResId = it }
+            if (progress == DEFAULT_PROGRESS_VALUE) {
+                getFloat(R.styleable.HorizontalProgressBar_progress_value, DEFAULT_PROGRESS_VALUE).let { progress = it }
+            }
         }?.recycle()
 
         Timer().schedule(object : TimerTask() {
@@ -136,87 +133,22 @@ class HorizontalProgressBar @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
+        canvas.saveLayer(rectBackground, paintBackground)
 
         // 背景部分の描画
-        canvas.saveLayer(rectBackground, paintBackground)
-        canvas.drawRoundRect(rectBackground, radius, radius, paintBackground)
+        drawBackground(canvas)
 
         // プログレスの描画領域を調整
-        when (decorationType) {
-            DecorationType.Tick -> paintInsideOfBackground
-            DecorationType.Line -> paintBackground
-        }.let {
-            canvas.drawRoundRect(rectInsideOfBackground, radius, radius, it)
-        }
+        drawInsideOfBackground(canvas)
 
         // プログレスの描画
-        val currentProgress = border + progress
+        val currentProgress = border + progressWidth
 
-        // 目盛りはプログレスに重ねて XOR するので
-        // プログレスの描画よりも上にして描画する
-        if (decorationType == DecorationType.Tick) {
-            RectF().apply {
-                set(innerLeft, innerTop, currentProgress, innerBottom)
-            }.let {
-                canvas.drawRect(it, paintProgress)
-            }
+        Log.d("Attributes", "decorationType: $decorationType width: $width border: $border progress: $progress")
 
-            for (i in 1 until DEFAULT_TICK_COUNT) {
-                val position = (tickInterval + border) * i
-                RectF().apply {
-                    set(position, innerTop, border + position, innerBottom)
-                }.let {
-                    canvas.drawRect(it, Paint().apply {
-                        color = colorBackground
-                        style = Paint.Style.FILL
-                        isAntiAlias = true
-                        xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
-                    })
-                }
-            }
-        }
-
-        // 画像でプログレスを描画
-        if (decorationType == DecorationType.Line) {
-            // 両端を角丸にするための投影先
-            canvas.drawRoundRect(rectInsideOfBackground, innerLeft, innerTop, Paint().apply {
-                isAntiAlias = true
-                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST)
-            })
-
-            // 投影する前景
-            bitmapForeground = BitmapFactory.decodeResource(resources, imageForegroundResId)
-            if (bitmapForeground == null) {
-                canvas.drawRect(rectMask, paintProgress)
-            } else {
-                canvas.drawBitmap(bitmapForeground!!, null, rectInsideOfBackground, Paint().apply {
-                    xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
-                })
-            }
-
-            // プログレスは開始座標Xを動かす
-            RectF().apply {
-                set(currentProgress, innerTop, innerRight, innerBottom)
-            }.let {
-                canvas.drawRect(it, Paint().apply {
-                    color = colorBackground
-                    isAntiAlias = true
-                    xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
-                })
-            }
-
-            // 縁取り
-            if (sizeBorder > 0f) {
-                val margin = sizeBorder * 0.5f
-                canvas.drawRoundRect(rectInsideOfBackground.let {
-                    RectF(it.left + margin, it.top + margin, it.right - margin, it.bottom - margin)
-                }, radius, radius, Paint().apply {
-                    color = Color.argb(10, 0, 0, 0)
-                    style = Paint.Style.STROKE
-                    strokeWidth = sizeBorder
-                    isAntiAlias = true
-                })
-            }
+        when (decorationType) {
+            DecorationType.Tick -> drawProgressWithTick(canvas, currentProgress)
+            DecorationType.Line -> drawProgressWithDrawable(canvas, currentProgress)
         }
 
         canvas.restore()
@@ -230,13 +162,83 @@ class HorizontalProgressBar @JvmOverloads constructor(
         }
     }
 
-    fun setProgress(progress: Float) {
-        val current = progress * innerWidthWithoutTick
-        this.progress = when (decorationType) {
-            DecorationType.Tick -> ((current / tickInterval).roundToInt() - 1).let { tickCount ->
-                current + border * if (tickCount < 0) 0 else tickCount
+    private fun drawBackground(canvas: Canvas) {
+        when (decorationType) {
+            DecorationType.Tick -> rectBackground to paintBackground
+            DecorationType.Line -> rectInsideOfBackground to Paint().apply {
+                isAntiAlias = true
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST)
             }
-            DecorationType.Line -> current
+        }.let { (rect, paint) ->
+            canvas.drawRoundRect(rect, radius, radius, paint)
+        }
+    }
+
+    private fun drawInsideOfBackground(canvas: Canvas) {
+        when (decorationType) {
+            DecorationType.Tick -> rectInsideOfBackground to Paint().apply {
+                color = Color.BLACK
+                style = Paint.Style.FILL
+                isAntiAlias = true
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+            }
+            DecorationType.Line -> rectInsideOfBackground to paintBackground
+        }.let { (rect, paint) ->
+            canvas.drawRoundRect(rect, radius, radius, paint)
+        }
+    }
+
+    private fun drawProgressWithTick(canvas: Canvas, progress: Float) {
+        RectF().apply {
+            set(innerLeft, innerTop, progress, innerBottom)
+        }.let {
+            canvas.drawRect(it, paintProgress)
+        }
+
+        for (i in 1 until DEFAULT_TICK_COUNT) {
+            val position = (tickInterval + border) * i
+            RectF().apply {
+                set(position, innerTop, border + position, innerBottom)
+            }.let {
+                canvas.drawRect(it, Paint().apply {
+                    color = colorBackground
+                    style = Paint.Style.FILL
+                    isAntiAlias = true
+                    xfermode = PorterDuffXfermode(PorterDuff.Mode.XOR)
+                })
+            }
+        }
+    }
+
+    private fun drawProgressWithDrawable(canvas: Canvas, progress: Float) {
+        bitmapForeground = BitmapFactory.decodeResource(resources, imageForegroundResId)
+        if (bitmapForeground == null) {
+            canvas.drawRect(rectInsideOfBackground.toInt(), paintProgress)
+        } else {
+            canvas.drawBitmap(bitmapForeground!!, null, rectInsideOfBackground, Paint().apply {
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+            })
+        }
+
+        // プログレスは開始座標Xを動かす
+        RectF().apply {
+            set(progress, innerTop, innerRight, innerBottom)
+        }.let {
+            canvas.drawRect(it, Paint().apply {
+                color = colorBackground
+                isAntiAlias = true
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP)
+            })
+        }
+
+        // 縁取り
+        if (sizeBorder > 0f) {
+            canvas.drawRoundRect(rectInsideOfBackground.setMargin(sizeBorder * 0.5f), radius, radius, Paint().apply {
+                color = Color.argb(10, 0, 0, 0)
+                style = Paint.Style.STROKE
+                strokeWidth = sizeBorder
+                isAntiAlias = true
+            })
         }
     }
 
@@ -252,8 +254,26 @@ class HorizontalProgressBar @JvmOverloads constructor(
     }
 
     fun reset() {
-        progress = 0f
+        progress = DEFAULT_PROGRESS_VALUE
     }
+
+    fun setDecorationType(type: DecorationType) {
+        decorationType = type
+    }
+
+    private fun RectF.toInt() = Rect(
+            left.toInt(),
+            top.toInt(),
+            right.toInt(),
+            bottom.toInt()
+    )
+
+    private fun RectF.setMargin(margin: Float) = RectF(
+            left + margin,
+            top + margin,
+            right - margin,
+            bottom - margin
+    )
 
     companion object {
         private const val DEFAULT_COLOR_BACKGROUND = Color.LTGRAY
@@ -262,6 +282,7 @@ class HorizontalProgressBar @JvmOverloads constructor(
         private const val DEFAULT_SIZE_BORDER = 0f
         private const val DEFAULT_SIZE_RADIUS = 0f
         private const val DEFAULT_SIZE_DECORATION_WIDTH = 0f
+        private const val DEFAULT_PROGRESS_VALUE = 0f
         private const val DEFAULT_TICK_COUNT = 10
     }
 }
