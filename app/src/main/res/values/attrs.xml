@@ -10,7 +10,6 @@
         <attr name="progress_color_decoration" format="color|reference" />
         <attr name="progress_size_border" format="dimension|reference" />
         <attr name="progress_size_radius" format="dimension|reference" />
-        <attr name="progress_size_decoration_width" format="dimension|reference" />
         <attr name="progress_image_foreground" format="reference" />
         <attr name="progress_value" format="float|reference" />
     </declare-styleable>

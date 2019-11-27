@@ -14,7 +14,6 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
 import java.util.*
@@ -42,7 +41,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var colorDecoration = DEFAULT_COLOR_DECORATION
     private var sizeBorder = DEFAULT_SIZE_BORDER
     private var sizeRadius = DEFAULT_SIZE_RADIUS
-    private var sizeDecorationWidth = DEFAULT_SIZE_DECORATION_WIDTH
     private var imageForegroundResId = 0
 
     // 枠や角丸の属性情報は直接使わない
@@ -89,7 +87,13 @@ class HorizontalProgressBar @JvmOverloads constructor(
         get() {
             val width = progress * innerWidthWithoutTick
             return when (decorationType) {
-                DecorationType.Tick -> ((width / tickInterval).roundToInt() - 1).let { width - border * if (it < 0) 0 else it }
+                DecorationType.Tick -> if (progress == DEFAULT_PROGRESS_VALUE) {
+                    // プログレスの表示が後ろにはみでちゃう
+                    border
+                } else {
+                    // 表示幅に応じて目盛りを考慮してあげる
+                    (width / tickInterval).roundToInt().let { width + border * if (it < 0) 0 else it }
+                }
                 DecorationType.Line -> width
             }
         }
@@ -115,7 +119,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
             getColor(R.styleable.HorizontalProgressBar_progress_color_decoration, DEFAULT_COLOR_DECORATION).let { colorDecoration = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_border, DEFAULT_SIZE_BORDER).let { sizeBorder = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
-            getDimension(R.styleable.HorizontalProgressBar_progress_size_decoration_width, DEFAULT_SIZE_DECORATION_WIDTH).let { sizeDecorationWidth = it }
             getResourceId(R.styleable.HorizontalProgressBar_progress_image_foreground, 0).let { imageForegroundResId = it }
             if (progress == DEFAULT_PROGRESS_VALUE) {
                 getFloat(R.styleable.HorizontalProgressBar_progress_value, DEFAULT_PROGRESS_VALUE).let { progress = it }
@@ -142,13 +145,9 @@ class HorizontalProgressBar @JvmOverloads constructor(
         drawInsideOfBackground(canvas)
 
         // プログレスの描画
-        val currentProgress = border + progressWidth
-
-        Log.d("Attributes", "decorationType: $decorationType width: $width border: $border progress: $progress")
-
         when (decorationType) {
-            DecorationType.Tick -> drawProgressWithTick(canvas, currentProgress)
-            DecorationType.Line -> drawProgressWithDrawable(canvas, currentProgress)
+            DecorationType.Tick -> drawProgressWithTick(canvas, progressWidth)
+            DecorationType.Line -> drawProgressWithDrawable(canvas, progressWidth)
         }
 
         canvas.restore()
@@ -281,7 +280,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
         private const val DEFAULT_COLOR_DECORATION = Color.GRAY
         private const val DEFAULT_SIZE_BORDER = 0f
         private const val DEFAULT_SIZE_RADIUS = 0f
-        private const val DEFAULT_SIZE_DECORATION_WIDTH = 0f
         private const val DEFAULT_PROGRESS_VALUE = 0f
         private const val DEFAULT_TICK_COUNT = 10
     }

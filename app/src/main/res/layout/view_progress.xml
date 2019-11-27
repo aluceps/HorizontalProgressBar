@@ -39,8 +39,7 @@
                 app:progress_color_decoration="#ccF09300"
                 app:progress_color_foreground="#FFBD1B"
                 app:progress_image_foreground="@mipmap/bk_progress"
-                app:progress_size_border="2dp"
-                app:progress_size_decoration_width="2dp"
+                app:progress_size_border="4dp"
                 app:progress_size_radius="12dp"
                 app:set_decoration_type="@{type}"
                 />
