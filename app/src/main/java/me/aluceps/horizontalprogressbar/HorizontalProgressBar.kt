@@ -112,8 +112,8 @@ class HorizontalProgressBar @JvmOverloads constructor(
                     colorForeground = Color.WHITE
                 }
                 DecorationType.Line -> {
-                    getColor(R.styleable.HorizontalProgressBar_progress_color_background, DEFAULT_COLOR_BACKGROUND).let { colorBackground = it }
-                    getColor(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
+                    getInteger(R.styleable.HorizontalProgressBar_progress_color_background, DEFAULT_COLOR_BACKGROUND).let { colorBackground = it }
+                    getInteger(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
                 }
             }
             getColor(R.styleable.HorizontalProgressBar_progress_color_decoration, DEFAULT_COLOR_DECORATION).let { colorDecoration = it }
