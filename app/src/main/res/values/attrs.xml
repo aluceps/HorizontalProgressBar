@@ -7,7 +7,6 @@
         </attr>
         <attr name="progress_color_background" format="color|reference" />
         <attr name="progress_color_foreground" format="color|reference" />
-        <attr name="progress_color_decoration" format="color|reference" />
         <attr name="progress_size_border" format="dimension|reference" />
         <attr name="progress_size_radius" format="dimension|reference" />
         <attr name="progress_image_foreground" format="reference" />

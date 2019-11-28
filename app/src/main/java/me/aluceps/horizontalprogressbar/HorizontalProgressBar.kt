@@ -38,7 +38,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
     private var decorationType = DecorationType.Tick
     private var colorBackground = DEFAULT_COLOR_BACKGROUND
     private var colorForeground = DEFAULT_COLOR_FOREGROUND
-    private var colorDecoration = DEFAULT_COLOR_DECORATION
     private var sizeBorder = DEFAULT_SIZE_BORDER
     private var sizeRadius = DEFAULT_SIZE_RADIUS
     private var imageForegroundResId = 0
@@ -116,7 +115,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
                     getInteger(R.styleable.HorizontalProgressBar_progress_color_foreground, DEFAULT_COLOR_FOREGROUND).let { colorForeground = it }
                 }
             }
-            getColor(R.styleable.HorizontalProgressBar_progress_color_decoration, DEFAULT_COLOR_DECORATION).let { colorDecoration = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_border, DEFAULT_SIZE_BORDER).let { sizeBorder = it }
             getDimension(R.styleable.HorizontalProgressBar_progress_size_radius, DEFAULT_SIZE_RADIUS).let { sizeRadius = it }
             getResourceId(R.styleable.HorizontalProgressBar_progress_image_foreground, 0).let { imageForegroundResId = it }
@@ -277,7 +275,6 @@ class HorizontalProgressBar @JvmOverloads constructor(
     companion object {
         private const val DEFAULT_COLOR_BACKGROUND = Color.LTGRAY
         private const val DEFAULT_COLOR_FOREGROUND = Color.GREEN
-        private const val DEFAULT_COLOR_DECORATION = Color.GRAY
         private const val DEFAULT_SIZE_BORDER = 0f
         private const val DEFAULT_SIZE_RADIUS = 0f
         private const val DEFAULT_PROGRESS_VALUE = 0f
