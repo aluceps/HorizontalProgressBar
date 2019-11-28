@@ -36,7 +36,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:progress_color_background="#ddd"
-                app:progress_color_decoration="#ccF09300"
                 app:progress_color_foreground="#FFBD1B"
                 app:progress_image_foreground="@mipmap/bk_progress"
                 app:progress_size_border="4dp"
